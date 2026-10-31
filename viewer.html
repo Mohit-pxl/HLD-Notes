@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HLD Notes - PDF Reader</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+        }
+
+        header {
+            padding: 16px 20px;
+            background: #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header h2 {
+            font-size: 20px;
+        }
+
+        header a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 15px;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 9px 14px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        #pageInfo {
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+
+        #viewer {
+            padding: 25px 12px;
+            display: flex;
+            justify-content: center;
+            min-height: 80vh;
+            overflow: auto;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            background: white;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.4);
+        }
+
+        #message {
+            text-align: center;
+            padding: 40px 15px;
+            color: #fbbf24;
+        }
+
+        @media (max-width: 500px) {
+            header h2 {
+                font-size: 16px;
+            }
+
+            .toolbar {
+                gap: 8px;
+            }
+
+            button {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h2>📚 HLD Notes Reader</h2>
+    <a href="index.html">← Back to Chapters</a>
+</header>
+
+<div class="toolbar">
+
+    <button id="prev">Previous</button>
+
+    <span id="pageInfo">Page 0 / 0</span>
+
+    <button id="next">Next</button>
+
+    <button id="zoomOut">−</button>
+
+    <button id="zoomIn">+</button>
+
+    <button id="fullscreen">Full Screen</button>
+
+</div>
+
+<div id="message">Loading PDF...</div>
+
+<div id="viewer">
+    <canvas id="pdfCanvas"></canvas>
+</div>
+
+<script>
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const canvas = document.getElementById('pdfCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const message = document.getElementById('message');
+    const viewer = document.getElementById('viewer');
+
+    const params = new URLSearchParams(window.location.search);
+    const file = params.get('file');
+
+    // Only allow PDFs uploaded to this repository.
+    const allowedFiles = [
+        '1l.pdf',
+        '2l.pdf',
+        '3l.pdf',
+        '4l.pdf',
+        '10l.pdf',
+        '11l.pdf',
+        '12l.pdf',
+        '13l.pdf',
+        '15l.pdf',
+        '16l.pdf',
+        '17l.pdf'
+    ];
+
+    let pdfDoc = null;
+    let pageNum = 1;
+    let scale = 1.2;
+
+    async function loadPDF() {
+        if (!allowedFiles.includes(file)) {
+            message.textContent = 'Invalid PDF file. Return to the chapter list.';
+            return;
+        }
+
+        try {
+            const loadingTask = pdfjsLib.getDocument(file);
+            pdfDoc = await loadingTask.promise;
+
+            message.style.display = 'none';
+
+            renderPage(pageNum);
+        } catch (error) {
+            console.error(error);
+            message.textContent =
+                'Unable to load PDF. Please check the file name and try again.';
+        }
+    }
+
+    async function renderPage(num) {
+        try {
+            const page = await pdfDoc.getPage(num);
+
+            const viewport = page.getViewport({ scale });
+
+            const pixelRatio = window.devicePixelRatio || 1;
+
+            canvas.width = viewport.width * pixelRatio;
+            canvas.height = viewport.height * pixelRatio;
+
+            canvas.style.width = viewport.width + 'px';
+            canvas.style.height = viewport.height + 'px';
+
+            ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+            await page.render({
+                canvasContext: ctx,
+                viewport: viewport
+            }).promise;
+
+            document.getElementById('pageInfo').textContent =
+                `Page ${num} / ${pdfDoc.numPages}`;
+
+            document.getElementById('prev').disabled = num <= 1;
+            document.getElementById('next').disabled =
+                num >= pdfDoc.numPages;
+
+        } catch (error) {
+            console.error(error);
+            message.style.display = 'block';
+            message.textContent = 'Error rendering this page.';
+        }
+    }
+
+    document.getElementById('prev').addEventListener('click', () => {
+        if (pageNum > 1) {
+            pageNum--;
+            renderPage(pageNum);
+        }
+    });
+
+    document.getElementById('next').addEventListener('click', () => {
+        if (pageNum < pdfDoc.numPages) {
+            pageNum++;
+            renderPage(pageNum);
+        }
+    });
+
+    document.getElementById('zoomIn').addEventListener('click', () => {
+        if (scale < 2.5) {
+            scale += 0.2;
+            renderPage(pageNum);
+        }
+    });
+
+    document.getElementById('zoomOut').addEventListener('click', () => {
+        if (scale > 0.6) {
+            scale -= 0.2;
+            renderPage(pageNum);
+        }
+    });
+
+    document.getElementById('fullscreen').addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+            viewer.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    });
+
+    loadPDF();
+</script>
+
+</body>
+</html>
