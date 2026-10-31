@@ -1,437 +1,253 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090a0a">
 <title>HLD Notes | Reader</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <style>
-
 :root {
-    --bg: #090b0b;
-    --surface: #141717;
+    --bg: #090a0a;
+    --surface: #151818;
     --border: #292e2e;
     --text: #f5f5f5;
     --muted: #929999;
     --accent: #facc15;
 }
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
     background: var(--bg);
     color: var(--text);
     font-family: Inter, system-ui, Arial, sans-serif;
-    min-height: 100vh;
 }
 
 /* HEADER */
-
 header {
-    height: 65px;
-    background: #0d1010;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    height: 62px;
     padding: 0 5%;
-    gap: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0c0e0e;
+    border-bottom: 1px solid var(--border);
 }
-
-.logo {
-    font-size: 20px;
-    font-weight: 800;
-}
-
-.logo span {
-    color: var(--accent);
-}
-
-.back-link {
-    color: var(--muted);
+.logo { font-size: 21px; font-weight: 800; text-decoration: none; color: white; }
+.logo span { color: var(--accent); }
+.back {
     text-decoration: none;
-    font-size: 14px;
-}
-
-.back-link:hover {
-    color: white;
-}
-
-/* READER HEADING */
-
-.reader-heading {
-    text-align: center;
-    padding: 24px 12px 15px;
-}
-
-.reader-heading h1 {
-    font-size: 20px;
-    margin-bottom: 5px;
-}
-
-.reader-heading p {
-    font-size: 12px;
     color: var(--muted);
+    font-size: 13px;
 }
+.back:hover { color: white; }
+
+/* READER TITLE */
+.reader-title {
+    padding: 23px 15px 17px;
+    text-align: center;
+}
+.reader-title h1 { font-size: 19px; }
+.reader-title p { color: var(--muted); font-size: 12px; margin-top: 4px; }
 
 /* TOOLBAR */
-
 .toolbar {
     position: sticky;
     top: 0;
-    z-index: 5;
-
+    z-index: 10;
+    min-height: 58px;
+    padding: 9px 12px;
+    background: rgba(21,24,24,.96);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
     gap: 9px;
-
-    padding: 13px;
-    background: rgba(20, 23, 23, 0.96);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
     backdrop-filter: blur(12px);
 }
-
-.control-btn {
-    border: 1px solid var(--border);
-    background: #202525;
-    color: white;
-    padding: 9px 13px;
-    border-radius: 7px;
-    font-size: 13px;
+button {
+    font: inherit;
     cursor: pointer;
-    transition: .2s;
 }
-
-.control-btn:hover {
-    background: #303737;
+.tool {
+    background: #202525;
+    border: 1px solid #343a3a;
+    color: white;
+    border-radius: 7px;
+    padding: 8px 12px;
+    font-size: 12px;
 }
-
-.control-btn:disabled {
-    opacity: .35;
-    cursor: not-allowed;
-}
-
-.page-control {
+.tool:hover { background: #303737; }
+.tool:disabled { opacity: .35; cursor: not-allowed; }
+.page-box {
     display: flex;
     align-items: center;
     gap: 6px;
     color: var(--muted);
-    font-size: 13px;
+    font-size: 12px;
 }
-
 #pageInput {
-    width: 48px;
+    width: 43px;
+    padding: 7px 3px;
+    text-align: center;
+    border-radius: 5px;
+    border: 1px solid var(--border);
     background: #090b0b;
     color: white;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    padding: 8px 4px;
-    text-align: center;
     outline: none;
 }
 
-/* PDF AREA */
-
+/* READING AREA */
+#message {
+    text-align: center;
+    padding: 35px 15px;
+    color: var(--muted);
+    font-size: 14px;
+}
 #viewer {
+    min-height: 80vh;
     width: 100%;
-    min-height: 75vh;
-    padding: 22px 12px 40px;
-
+    padding: 22px 12px 100px;
     display: flex;
     justify-content: center;
     align-items: flex-start;
-
-    background: #090b0b;
-
     overflow: auto;
     overscroll-behavior: contain;
+    background: #090a0a;
 }
-
-#canvasWrapper {
-    display: flex;
-    justify-content: center;
-    min-width: 100%;
-}
-
 #pdfCanvas {
     display: block;
-    height: auto;
     background: white;
-    border-radius: 3px;
-    box-shadow: 0 8px 30px rgba(0,0,0,.3);
+    height: auto;
+    border-radius: 2px;
+    box-shadow: 0 8px 35px rgba(0,0,0,.45);
 }
 
-/* LOADING */
-
-#message {
-    color: var(--muted);
-    text-align: center;
-    padding: 30px 15px;
-}
-
-/* BOTTOM NAVIGATION */
-
-.bottom-navigation {
+/* FLOATING PAGE CONTROLS */
+.floating-nav {
     position: fixed;
-    z-index: 6;
-    bottom: 15px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-
+    z-index: 15;
     display: flex;
     align-items: center;
-    gap: 12px;
-
-    padding: 8px;
-    border-radius: 50px;
-    background: rgba(25, 30, 30, .95);
-    border: 1px solid #383f3f;
+    gap: 13px;
+    padding: 8px 11px;
+    border: 1px solid #343a3a;
+    background: rgba(25,29,29,.96);
+    border-radius: 40px;
     box-shadow: 0 5px 25px rgba(0,0,0,.4);
 }
-
-.bottom-navigation button {
-    width: 40px;
-    height: 40px;
+.floating-nav button {
+    width: 39px;
+    height: 39px;
     border: none;
     border-radius: 50%;
     background: #303737;
     color: white;
     font-size: 19px;
-    cursor: pointer;
 }
-
-.bottom-navigation button:disabled {
-    opacity: .3;
-}
-
-#bottomPageInfo {
-    font-size: 12px;
-    color: white;
+.floating-nav button:disabled { opacity: .3; }
+#bottomInfo {
     min-width: 70px;
     text-align: center;
+    font-size: 12px;
+    color: white;
 }
 
 /* FULLSCREEN */
-
 #viewer:fullscreen {
-    background: #090b0b;
+    background: #090a0a;
     padding: 20px;
     align-items: center;
 }
+#viewer:fullscreen #pdfCanvas {
+    max-height: 100%;
+}
 
 /* MOBILE */
+@media(max-width:600px) {
+    header { height: 56px; padding: 0 16px; }
+    .logo { font-size: 19px; }
+    .back { font-size: 12px; }
 
-@media(max-width: 600px) {
+    .reader-title { padding: 17px 10px 13px; }
+    .reader-title h1 { font-size: 17px; }
 
-    header {
-        height: 58px;
-        padding: 0 16px;
-    }
+    .toolbar { gap: 6px; padding: 9px 5px; }
+    .tool { padding: 8px 9px; font-size: 11px; }
+    .page-box { font-size: 11px; }
+    #pageInput { width: 37px; }
 
-    .logo {
-        font-size: 17px;
-    }
+    #viewer { padding: 13px 10px 90px; }
 
-    .back-link {
-        font-size: 12px;
-    }
-
-    .reader-heading {
-        padding: 18px 10px 13px;
-    }
-
-    .reader-heading h1 {
-        font-size: 18px;
-    }
-
-    .toolbar {
-        gap: 6px;
-        padding: 10px 5px;
-    }
-
-    .control-btn {
-        padding: 8px 10px;
-        font-size: 12px;
-    }
-
-    .page-control {
-        font-size: 11px;
-    }
-
-    #pageInput {
-        width: 40px;
-        padding: 7px 3px;
-    }
-
-    #viewer {
-        padding: 12px 10px 85px;
-        min-height: 75vh;
-    }
-
-    .bottom-navigation {
-        bottom: 18px;
-    }
-
+    .floating-nav { bottom: 17px; }
 }
-
-/* HIDE BOTTOM CONTROLS IN FULLSCREEN */
-
-#viewer:fullscreen ~ .bottom-navigation {
-    display: none;
-}
-
 </style>
 </head>
 
 <body>
 
 <header>
-    <a href="index.html" class="logo">
-        HLD<span>.</span>
-    </a>
-
-    <a href="index.html" class="back-link">
-        ← Back to Chapters
-    </a>
+    <a href="index.html" class="logo">HLD<span>.</span></a>
+    <a href="index.html" class="back">← All Chapters</a>
 </header>
 
-
-<div class="reader-heading">
+<section class="reader-title">
     <h1>HLD Notes Reader</h1>
-    <p>Read, explore and understand system design.</p>
-</div>
-
-
-<!-- TOOLBAR -->
+    <p>Take your time. Understand the concepts.</p>
+</section>
 
 <div class="toolbar">
+    <button class="tool" id="prev" disabled>← Previous</button>
 
-    <button class="control-btn" id="prev">
-        ← Prev
-    </button>
-
-    <div class="page-control">
-        <input
-            type="number"
-            id="pageInput"
-            min="1"
-            value="1"
-            aria-label="Page number"
-        >
-
+    <div class="page-box">
+        <input type="number" id="pageInput" min="1" value="1">
         <span id="totalPages">/ 0</span>
     </div>
 
-    <button class="control-btn" id="next">
-        Next →
-    </button>
-
-    <button class="control-btn" id="zoomOut">
-        −
-    </button>
-
-    <button class="control-btn" id="zoomIn">
-        +
-    </button>
-
-    <button class="control-btn" id="fullscreen">
-        ⛶
-    </button>
-
+    <button class="tool" id="next" disabled>Next →</button>
+    <button class="tool" id="zoomOut">−</button>
+    <button class="tool" id="zoomIn">+</button>
+    <button class="tool" id="fullscreen">⛶</button>
 </div>
 
-
-<div id="message">
-    Loading your notes...
-</div>
-
-
-<!-- PDF VIEWER -->
+<div id="message">Loading your notes...</div>
 
 <div id="viewer">
-
-    <div id="canvasWrapper">
-        <canvas id="pdfCanvas"></canvas>
-    </div>
-
+    <canvas id="pdfCanvas"></canvas>
 </div>
 
-
-<!-- FLOATING NAVIGATION -->
-
-<div class="bottom-navigation">
-
-    <button id="bottomPrev" aria-label="Previous page">
-        ←
-    </button>
-
-    <span id="bottomPageInfo">
-        1 / 0
-    </span>
-
-    <button id="bottomNext" aria-label="Next page">
-        →
-    </button>
-
+<div class="floating-nav">
+    <button id="bottomPrev" aria-label="Previous page">←</button>
+    <span id="bottomInfo">1 / 0</span>
+    <button id="bottomNext" aria-label="Next page">→</button>
 </div>
-
 
 <script>
-
-// PDF.js configuration
-
 const pdfjsLib = window['pdfjs-dist/build/pdf'];
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-
-// DOM elements
-
 const canvas = document.getElementById('pdfCanvas');
 const ctx = canvas.getContext('2d');
-
 const viewer = document.getElementById('viewer');
-const wrapper = document.getElementById('canvasWrapper');
 const message = document.getElementById('message');
 
-
-// PDF filename
-
-const params = new URLSearchParams(window.location.search);
-
+const params = new URLSearchParams(location.search);
 const file = params.get('file');
 
-
-// Allowed files
-
 const allowedFiles = [
-    '1l.pdf',
-    '2l.pdf',
-    '3l.pdf',
-    '4l.pdf',
-    '10l.pdf',
-    '11l.pdf',
-    '12l.pdf',
-    '13l.pdf',
-    '15l.pdf',
-    '16l.pdf',
-    '17l.pdf'
+    '1l.pdf','2l.pdf','3l.pdf','4l.pdf',
+    '5l.pdf','6l.pdf','7l.pdf','8l.pdf','9l.pdf',
+    '10l.pdf','11l.pdf','12l.pdf','13l.pdf',
+    '15l.pdf','16l.pdf','17l.pdf'
 ];
-
-
-// State
 
 let pdfDoc = null;
 let pageNum = 1;
@@ -439,104 +255,64 @@ let zoomLevel = 1;
 let renderTask = null;
 let renderVersion = 0;
 
-
-// RESPONSIVE SCALE
-
 function getScale(page) {
-
-    const originalViewport = page.getViewport({
-        scale: 1
-    });
-
+    const original = page.getViewport({scale: 1});
     const availableWidth = viewer.clientWidth - 24;
-
-    const fitScale = Math.min(
-        1.2,
-        availableWidth / originalViewport.width
-    );
-
-    return fitScale * zoomLevel;
-
+    const fit = Math.min(1.2, availableWidth / original.width);
+    return fit * zoomLevel;
 }
 
-
-// UPDATE NAVIGATION
-
-function updateNavigation() {
-
+function updateControls() {
     document.getElementById('pageInput').value = pageNum;
-
-    document.getElementById('pageInput').max =
-        pdfDoc.numPages;
+    document.getElementById('pageInput').max = pdfDoc.numPages;
 
     document.getElementById('totalPages').textContent =
         `/ ${pdfDoc.numPages}`;
 
-    document.getElementById('bottomPageInfo').textContent =
+    document.getElementById('bottomInfo').textContent =
         `${pageNum} / ${pdfDoc.numPages}`;
 
-    document.getElementById('prev').disabled =
-        pageNum <= 1;
+    document.getElementById('prev').disabled = pageNum <= 1;
+    document.getElementById('bottomPrev').disabled = pageNum <= 1;
 
     document.getElementById('next').disabled =
         pageNum >= pdfDoc.numPages;
 
-    document.getElementById('bottomPrev').disabled =
-        pageNum <= 1;
-
     document.getElementById('bottomNext').disabled =
         pageNum >= pdfDoc.numPages;
-
 }
 
-
-// RENDER PDF PAGE
-
-async function renderPage(num) {
-
+async function renderPage(number) {
     if (!pdfDoc) return;
 
     const version = ++renderVersion;
 
     try {
-
         if (renderTask) {
             renderTask.cancel();
             renderTask = null;
         }
 
-        const page = await pdfDoc.getPage(num);
+        const page = await pdfDoc.getPage(number);
 
         if (version !== renderVersion) return;
 
-        const scale = getScale(page);
-
         const viewport = page.getViewport({
-            scale
+            scale: getScale(page)
         });
 
         const pixelRatio = Math.min(
-            window.devicePixelRatio || 1,
-            2
+            window.devicePixelRatio || 1, 2
         );
 
-        canvas.width =
-            Math.floor(viewport.width * pixelRatio);
-
-        canvas.height =
-            Math.floor(viewport.height * pixelRatio);
+        canvas.width = Math.floor(viewport.width * pixelRatio);
+        canvas.height = Math.floor(viewport.height * pixelRatio);
 
         canvas.style.width = viewport.width + 'px';
-
         canvas.style.height = viewport.height + 'px';
 
         ctx.setTransform(
-            pixelRatio,
-            0,
-            0,
-            pixelRatio,
-            0,
-            0
+            pixelRatio, 0, 0, pixelRatio, 0, 0
         );
 
         renderTask = page.render({
@@ -549,270 +325,150 @@ async function renderPage(num) {
         if (version !== renderVersion) return;
 
         renderTask = null;
-
-        updateNavigation();
-
+        updateControls();
         message.style.display = 'none';
 
     } catch (error) {
-
-        if (error.name === 'RenderingCancelledException') {
-            return;
-        }
+        if (error.name === 'RenderingCancelledException') return;
 
         console.error(error);
-
         message.style.display = 'block';
-
-        message.textContent =
-            'Unable to render this page.';
-
+        message.textContent = 'Unable to display this page.';
     }
-
 }
 
+function changePage(number) {
+    if (!pdfDoc || number < 1 || number > pdfDoc.numPages) return;
 
-// CHANGE PAGE
-
-function changePage(newPage) {
-
-    if (!pdfDoc) return;
-
-    if (
-        newPage < 1 ||
-        newPage > pdfDoc.numPages
-    ) return;
-
-    pageNum = newPage;
-
-    renderPage(pageNum);
-
+    pageNum = number;
     viewer.scrollTop = 0;
     viewer.scrollLeft = 0;
-
+    renderPage(pageNum);
 }
 
-
-// LOAD PDF
-
 async function loadPDF() {
-
     if (!allowedFiles.includes(file)) {
-
-        message.textContent =
-            'Invalid PDF file. Return to the homepage.';
-
+        message.textContent = 'Invalid PDF. Return to the chapters page.';
         return;
-
     }
 
     try {
-
-        const loadingTask = pdfjsLib.getDocument(file);
-
-        pdfDoc = await loadingTask.promise;
-
-        document.getElementById('totalPages').textContent =
-            `/ ${pdfDoc.numPages}`;
+        const task = pdfjsLib.getDocument(file);
+        pdfDoc = await task.promise;
 
         pageNum = 1;
         zoomLevel = 1;
 
+        document.getElementById('totalPages').textContent =
+            `/ ${pdfDoc.numPages}`;
+
         renderPage(pageNum);
 
     } catch (error) {
-
         console.error(error);
-
-        message.textContent =
-            'Unable to load PDF. Please try again.';
-
+        message.textContent = 'Unable to load PDF. Please try again.';
     }
-
 }
 
+/* BUTTON NAVIGATION */
+document.getElementById('prev').onclick =
+    () => changePage(pageNum - 1);
 
-// PREVIOUS / NEXT BUTTONS
+document.getElementById('bottomPrev').onclick =
+    () => changePage(pageNum - 1);
 
-document.getElementById('prev').addEventListener('click', () => {
-    changePage(pageNum - 1);
-});
+document.getElementById('next').onclick =
+    () => changePage(pageNum + 1);
 
-document.getElementById('next').addEventListener('click', () => {
-    changePage(pageNum + 1);
-});
+document.getElementById('bottomNext').onclick =
+    () => changePage(pageNum + 1);
 
-document.getElementById('bottomPrev').addEventListener('click', () => {
-    changePage(pageNum - 1);
-});
-
-document.getElementById('bottomNext').addEventListener('click', () => {
-    changePage(pageNum + 1);
-});
-
-
-// DIRECT PAGE NAVIGATION
-
-document.getElementById('pageInput')
-.addEventListener('change', (event) => {
-
-    const requestedPage = Number(event.target.value);
+/* PAGE JUMP */
+document.getElementById('pageInput').addEventListener('change', e => {
+    const requested = Number(e.target.value);
 
     if (
-        Number.isInteger(requestedPage) &&
-        pdfDoc &&
-        requestedPage >= 1 &&
-        requestedPage <= pdfDoc.numPages
+        Number.isInteger(requested) &&
+        requested >= 1 &&
+        requested <= pdfDoc.numPages
     ) {
-        changePage(requestedPage);
+        changePage(requested);
     } else {
-        event.target.value = pageNum;
+        e.target.value = pageNum;
     }
-
 });
 
-
-// ZOOM
-
-document.getElementById('zoomIn')
-.addEventListener('click', () => {
-
+/* ZOOM */
+document.getElementById('zoomIn').onclick = () => {
     if (zoomLevel < 2.5) {
-
         zoomLevel = Math.min(2.5, zoomLevel + 0.2);
-
         renderPage(pageNum);
-
     }
+};
 
-});
-
-document.getElementById('zoomOut')
-.addEventListener('click', () => {
-
+document.getElementById('zoomOut').onclick = () => {
     if (zoomLevel > 0.6) {
-
         zoomLevel = Math.max(0.6, zoomLevel - 0.2);
-
         renderPage(pageNum);
-
     }
+};
 
+/* KEYBOARD */
+document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+
+    if (e.key === 'ArrowRight') changePage(pageNum + 1);
+    if (e.key === 'ArrowLeft') changePage(pageNum - 1);
 });
 
+/* MOBILE SWIPE */
+let startX = 0;
+let startY = 0;
 
-// KEYBOARD NAVIGATION
+viewer.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
 
-document.addEventListener('keydown', (event) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+}, {passive: true});
 
-    if (
-        event.target.tagName === 'INPUT' ||
-        document.fullscreenElement
-    ) return;
+viewer.addEventListener('touchend', e => {
+    if (e.changedTouches.length !== 1 || zoomLevel > 1.05) return;
 
-    if (event.key === 'ArrowRight') {
-        changePage(pageNum + 1);
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+
+    if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+        if (dx < 0) changePage(pageNum + 1);
+        else changePage(pageNum - 1);
     }
+}, {passive: true});
 
-    if (event.key === 'ArrowLeft') {
-        changePage(pageNum - 1);
-    }
-
-});
-
-
-// TOUCH SWIPE NAVIGATION
-
-let touchStartX = 0;
-let touchStartY = 0;
-
-viewer.addEventListener('touchstart', (event) => {
-
-    if (event.touches.length !== 1) return;
-
-    touchStartX = event.touches[0].clientX;
-    touchStartY = event.touches[0].clientY;
-
-}, { passive: true });
-
-
-viewer.addEventListener('touchend', (event) => {
-
-    if (event.changedTouches.length !== 1) return;
-
-    if (zoomLevel > 1.05) return;
-
-    const touchEndX = event.changedTouches[0].clientX;
-    const touchEndY = event.changedTouches[0].clientY;
-
-    const diffX = touchEndX - touchStartX;
-    const diffY = touchEndY - touchStartY;
-
-    if (
-        Math.abs(diffX) > 65 &&
-        Math.abs(diffX) > Math.abs(diffY) * 1.3
-    ) {
-
-        if (diffX < 0) {
-            changePage(pageNum + 1);
-        } else {
-            changePage(pageNum - 1);
-        }
-
-    }
-
-}, { passive: true });
-
-
-// FULLSCREEN
-
-document.getElementById('fullscreen')
-.addEventListener('click', async () => {
-
+/* FULLSCREEN */
+document.getElementById('fullscreen').onclick = async () => {
     try {
-
         if (!document.fullscreenElement) {
-
             await viewer.requestFullscreen();
-
         } else {
-
             await document.exitFullscreen();
-
         }
-
     } catch (error) {
-
-        console.error('Fullscreen unavailable:', error);
-
+        console.error(error);
     }
+};
 
-});
-
-
-// RESIZE
-
+/* RESIZE */
 let resizeTimer;
 
 window.addEventListener('resize', () => {
-
     clearTimeout(resizeTimer);
 
     resizeTimer = setTimeout(() => {
-
-        if (pdfDoc) {
-            renderPage(pageNum);
-        }
-
+        if (pdfDoc) renderPage(pageNum);
     }, 250);
-
 });
 
-
-// START
-
 loadPDF();
-
 </script>
 
 </body>
